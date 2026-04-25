@@ -45,19 +45,19 @@ class Option {
 
     // clang-format off
     /** GETTERS **/
-    std::string getFull() const { return full; }
-    std::string getFlag() const { return flag; }
-    std::string getDescription() const { return description; }
+    std::string getFull() const { return this->full; }
+    std::string getFlag() const { return this->flag; }
+    std::string getDescription() const { return this->description; }
 
-    std::string getValueString() const { return value; }
+    std::string getValueAsString() const { return this->value; }
 
-    bool getRequired() const { return required; }
-    bool getFilled() const { return filled; }
+    bool getRequired() const { return this->required; }
+    bool getFilled() const { return this->filled; }
 
     /** SETTERS **/
-    void setValueString(const std::string &value_) { value = value_; }
+    void setValue(const std::string &value_) { this->value = value_; this->filled = true;}
 
-    void setFilled(bool filled_) { filled = filled_; }
+    void setFilled(bool filled_) { this->filled = filled_; }
 
     // clang-format on
 
@@ -68,15 +68,15 @@ class Option {
     /// @throws std::runtime_error
     template <typename TypeToReturn>
     constexpr TypeToReturn valueAs() const {
-      if (typeid(TypeToReturn) == typeid(std::string)) return this->value;
+      if constexpr (std::is_same<TypeToReturn, std::string>::value) return this->value;
 
       /**/
 
-      if (typeid(TypeToReturn) == typeid(bool)) {
+      if constexpr (std::is_same<TypeToReturn, bool>::value) {
         if (this->value.empty()) return false;
 
         const char first = this->value[0];
-        if (first == 'T' || first == 't' || first >= '1') return true;
+        if (first == 'T' || first == 't' || first == '1') return true;
         if (first == 'F' || first == 'f' || first == '0') return false;
 
 #ifdef C3PO_NO_EXCEPTIONS
@@ -88,7 +88,8 @@ class Option {
 
       /**/
 
-      if (typeid(TypeToReturn) == typeid(char)) return (this->value.empty() ? 0 : this->value[0]);
+      if constexpr (std::is_same<TypeToReturn, char>::value)
+        return (this->value.empty() ? 0 : this->value[0]);
 
       /**/
 
@@ -114,10 +115,6 @@ class Option {
 #endif
         }
       }
-
-      /**/
-
-      return static_cast<TypeToReturn>(this->value);  // last-ditch effort if all other fail
     }
 };
 
