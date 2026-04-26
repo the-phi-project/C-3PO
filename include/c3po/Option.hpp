@@ -11,7 +11,6 @@
 
 #include <string>
 #include <exception>
-#include <typeinfo>
 #include <type_traits>
 
 //---------> [ Config. Separator ] <---------\\ 
@@ -27,21 +26,29 @@ class Option {
 
     std::string value;
 
+    bool takes_value;
     bool required;
     bool filled = false;
 
   public:
     Option(const std::string& full_, const std::string& flag_, const std::string& description_,
-           bool required_)
-        : full(full_), flag(flag_), description(description_), required(required_) {
+           bool takes_value_, bool required_)
+        : full(full_),
+          flag(flag_),
+          description(description_),
+          takes_value(takes_value_),
+          required(required_) {
     }
 
-    explicit Option(const std::string& flag_) : flag(flag_), required(false) {
+    explicit Option(const std::string& flag_, bool takes_value_)
+        : flag(flag_), takes_value(takes_value_), required(false) {
     }
 
     Option(const Option& opt) = delete;  // too expensive to copy
 
     ~Option() = default;
+
+    //=====[ Declaration Separator ]=====\\ 
 
     // clang-format off
     /** GETTERS **/
@@ -51,6 +58,7 @@ class Option {
 
     std::string getValueAsString() const { return this->value; }
 
+    bool getTakesValue() const { return this->takes_value; }
     bool getRequired() const { return this->required; }
     bool getFilled() const { return this->filled; }
 
@@ -68,6 +76,8 @@ class Option {
     /// @throws std::runtime_error
     template <typename TypeToReturn>
     constexpr TypeToReturn valueAs() const {
+      if (std::is_same<TypeToReturn, bool>::value && !this->takes_value) return this->filled;
+
       if constexpr (std::is_same<TypeToReturn, std::string>::value) return this->value;
 
       /**/
